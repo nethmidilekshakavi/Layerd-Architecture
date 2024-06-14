@@ -32,10 +32,9 @@ public class CustomerDAOImpl implements CustomerDao {
 
     }
 
-
     public boolean saveCustomer(CustomerDTO customerDTO) throws SQLException, ClassNotFoundException {
         Connection connection = DBConnection.getDbConnection().getConnection();
-        PreparedStatement pstm = connection.prepareStatement("INSERT INTO Customer (id,name, address) VALUES (?,?,?)");
+        PreparedStatement pstm = connection.prepareStatement("INSERT INTO Customer (id,name,address) VALUES (?,?,?)");
         pstm.setString(1, customerDTO.getId());
         pstm.setString(2, customerDTO.getName());
         pstm.setString(3, customerDTO.getAddress());
@@ -108,7 +107,6 @@ public class CustomerDAOImpl implements CustomerDao {
         return allcustomerid;
     }
 
-
     public boolean exitCustomer(String id) throws SQLException, ClassNotFoundException {
         Connection connection = DBConnection.getDbConnection().getConnection();
         PreparedStatement pstm = connection.prepareStatement("SELECT id FROM Customer WHERE id=?");
@@ -117,6 +115,15 @@ public class CustomerDAOImpl implements CustomerDao {
         return false;
     }
 
+    public void serchCustomer(String newValue) throws SQLException, ClassNotFoundException {
+        Connection connection = DBConnection.getDbConnection().getConnection();
+        PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Customer WHERE id=?");
+        pstm.setString(1, newValue + "");
+        ResultSet rst = pstm.executeQuery();
+        rst.next();
+        CustomerDTO customerDTO = new CustomerDTO(newValue + "", rst.getString("name"), rst.getString("address"));
+
+    }
 }
 
 

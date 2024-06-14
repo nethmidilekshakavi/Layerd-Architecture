@@ -99,27 +99,29 @@ public class PlaceOrderFormController {
             if (newValue != null) {
                 try {
                     /*Search Customer*/
-                   Connection connection = DBConnection.getDbConnection().getConnection();
+                 //  Connection connection = DBConnection.getDbConnection().getConnection();
                     try {
                         if (!existCustomer(newValue + "")) {
 //                            "There is no such customer associated with the id " + id
                             new Alert(Alert.AlertType.ERROR, "There is no such customer associated with the id " + newValue + "").show();
                         }
 
-                        PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Customer WHERE id=?");
+                       /* PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Customer WHERE id=?");
                         pstm.setString(1, newValue + "");
                         ResultSet rst = pstm.executeQuery();
                         rst.next();
                         CustomerDTO customerDTO = new CustomerDTO(newValue + "", rst.getString("name"), rst.getString("address"));
 
-                        txtCustomerName.setText(customerDTO.getName());
+                        txtCustomerName.setText(customerDTO.getName());*/
+
+                        CustomerDAOImpl cusid = new CustomerDAOImpl();
+                        cusid.serchCustomer(newValue);
+
 
                     } catch (SQLException e) {
                         new Alert(Alert.AlertType.ERROR, "Failed to find the customer " + newValue + "" + e).show();
                     }
 
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -212,25 +214,19 @@ public class PlaceOrderFormController {
     }
 
     public String generateNewOrderId() {
-        try {
-           /* Connection connection = DBConnection.getDbConnection().getConnection();
-            Statement stm = connection.createStatement();
-            ResultSet rst = stm.executeQuery("SELECT oid FROM `Orders` ORDER BY oid DESC LIMIT 1;");
-
-            return rst.next() ? String.format("OID-%03d", (Integer.parseInt(rst.getString("oid").replace("OID-", "")) + 1)) : "OID-001";*/
-
-            OrderDTO orderDTO = new OrderDTO();
-            OrderDAOImpl orderDAO = new OrderDAOImpl();
-            orderDAO.genarateNewOrderIds(orderDTO);
-
-
-        } catch (SQLException e) {
-            new Alert(Alert.AlertType.ERROR, "Failed to generate a new order id").show();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            try {
+                OrderDAOImpl orderDAO = new OrderDAOImpl();
+                return orderDAO.generateNewOrderIds();
+            } catch (SQLException e) {
+                new Alert(Alert.AlertType.ERROR, "Failed to generate a new order id").show();
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            return "OID-001";
         }
-        return "OID-001";
-    }
+
+
 
     private void loadAllCustomerIds() {
         try {
@@ -425,12 +421,20 @@ public class PlaceOrderFormController {
 
     public ItemDTO findItem(String code) {
         try {
-            Connection connection = DBConnection.getDbConnection().getConnection();
+           /* Connection connection = DBConnection.getDbConnection().getConnection();
             PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Item WHERE code=?");
             pstm.setString(1, code);
             ResultSet rst = pstm.executeQuery();
-            rst.next();
-            return new ItemDTO(code, rst.getString("description"), rst.getBigDecimal("unitPrice"), rst.getInt("qtyOnHand"));
+            rst.next();*/
+           // return new ItemDTO(code, rst.getString("description"), rst.getBigDecimal("unitPrice"), rst.getInt("qtyOnHand"));
+
+
+            ItemDTO itemDTO= new ItemDTO();
+            ItemDAOImpl itemDAO = new ItemDAOImpl();
+            itemDAO.findItem(String.valueOf(itemDTO));
+
+
+
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find the Item " + code, e);
         } catch (ClassNotFoundException e) {
