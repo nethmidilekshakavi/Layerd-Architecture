@@ -1,7 +1,5 @@
 package com.example.layeredarchitecture.model;
 
-import com.example.layeredarchitecture.Dao.OrderDAOImpl;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -25,7 +23,7 @@ public class OrderDTO  {
         this.orderTotal = orderTotal;
     }
 
-    public String getOrderId(OrderDAOImpl orderDAO) {
+    public String getOrderId() {
         return orderId;
     }
 

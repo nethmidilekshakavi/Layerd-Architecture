@@ -1,8 +1,6 @@
 package com.example.layeredarchitecture.controller;
 
-import com.example.layeredarchitecture.Dao.CustomerDAOImpl;
-import com.example.layeredarchitecture.Dao.ItemDAOImpl;
-import com.example.layeredarchitecture.Dao.OrderDAOImpl;
+import com.example.layeredarchitecture.Dao.*;
 import com.example.layeredarchitecture.db.DBConnection;
 import com.example.layeredarchitecture.model.CustomerDTO;
 import com.example.layeredarchitecture.model.ItemDTO;
@@ -54,6 +52,12 @@ public class PlaceOrderFormController {
     public Label lblDate;
     public Label lblTotal;
     private String orderId;
+
+   OrderDao orderDao = new OrderDAOImpl();
+
+   CustomerDao customerDao = new CustomerDAOImpl();
+
+    OrderDetailDao orderDetailDao = new OrderDetailDAOImpl();
 
     public void initialize() throws SQLException, ClassNotFoundException {
 
@@ -114,8 +118,9 @@ public class PlaceOrderFormController {
 
                         txtCustomerName.setText(customerDTO.getName());*/
 
-                        CustomerDAOImpl cusid = new CustomerDAOImpl();
-                        cusid.serchCustomer(newValue);
+                        CustomerDTO customerDTO = customerDao.serchCustomer(newValue);
+
+                        txtCustomerName.setText(customerDTO.getName());
 
 
                     } catch (SQLException e) {
@@ -142,12 +147,9 @@ public class PlaceOrderFormController {
                     if (!existItem(newItemCode + "")) {
 //                    throw new NotFoundException("There is no such item associated with the id " + code);
                     }
-                    Connection connection = DBConnection.getDbConnection().getConnection();
-                    PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Item WHERE code=?");
-                    pstm.setString(1, newItemCode + "");
-                    ResultSet rst = pstm.executeQuery();
-                    rst.next();
-                    ItemDTO item = new ItemDTO(newItemCode + "", rst.getString("description"), rst.getBigDecimal("unitPrice"), rst.getInt("qtyOnHand"));
+
+                    ItemDAOImpl itemDAO = new ItemDAOImpl();
+                    ItemDTO item = itemDAO.findItem(newItemCode + "");
 
                    txtDescription.setText(item.getDescription());
                   txtUnitPrice.setText(item.getUnitPrice().setScale(2).toString());
@@ -207,16 +209,15 @@ public class PlaceOrderFormController {
         PreparedStatement pstm = connection.prepareStatement("SELECT id FROM Customer WHERE id=?");
         pstm.setString(1, id);
         return pstm.executeQuery().next();*/
-        CustomerDAOImpl customerDAO = new CustomerDAOImpl();
-        boolean b = customerDAO.exitCustomer(id);
-
-        return b;
+      return customerDao.exitCustomer(id);
     }
 
     public String generateNewOrderId() {
             try {
-                OrderDAOImpl orderDAO = new OrderDAOImpl();
-                return orderDAO.generateNewOrderIds();
+
+                return orderDao.lastOrderId();
+
+
             } catch (SQLException e) {
                 new Alert(Alert.AlertType.ERROR, "Failed to generate a new order id").show();
                 e.printStackTrace();
@@ -234,10 +235,9 @@ public class PlaceOrderFormController {
             Statement stm = connection.createStatement();
             ResultSet rst = stm.executeQuery("SELECT * FROM Customer");*/
 
-            CustomerDAOImpl customerDAO = new CustomerDAOImpl();
-            ArrayList<CustomerDTO> cusid = customerDAO.loadallCustomerID();
-            for (CustomerDTO customerDTO : cusid) {
-                cmbCustomerId.getItems().add(customerDTO.getId());
+            ArrayList<String> cusid = customerDao.loadallCustomerID();
+            for (String id : cusid) {
+                cmbCustomerId.getItems().add(id);
             }
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, "Failed to load customer ids").show();
@@ -252,10 +252,11 @@ public class PlaceOrderFormController {
            /* Connection connection = DBConnection.getDbConnection().getConnection();
             Statement stm = connection.createStatement();
             ResultSet rst = stm.executeQuery("SELECT * FROM Item");*/
-            ItemDAOImpl itemDAO = new ItemDAOImpl();
-            ArrayList<ItemDTO> itemcoeds = itemDAO.getallcodes();
-            for (ItemDTO itemDTO : itemcoeds){
-                cmbItemCode.getItems().add(itemDTO.getCode());
+            ItemDAOImpl item = new ItemDAOImpl();
+            ArrayList<String> arlist =item.getallcodes();
+            System.out.println(arlist);
+            for (String id : arlist){
+                cmbItemCode.getItems().add(id);
             }
 
 
@@ -419,29 +420,23 @@ public class PlaceOrderFormController {
     }
 
 
-    public ItemDTO findItem(String code) {
-        try {
-           /* Connection connection = DBConnection.getDbConnection().getConnection();
-            PreparedStatement pstm = connection.prepareStatement("SELECT * FROM Item WHERE code=?");
-            pstm.setString(1, code);
-            ResultSet rst = pstm.executeQuery();
-            rst.next();*/
-           // return new ItemDTO(code, rst.getString("description"), rst.getBigDecimal("unitPrice"), rst.getInt("qtyOnHand"));
+        public ItemDTO findItem(String code) throws SQLException, ClassNotFoundException {
 
+            try {
+                ItemDAOImpl itemDAO = new ItemDAOImpl();
+                return  itemDAO.findItem(code);
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to find the Item " + code, e);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            return null;
 
-            ItemDTO itemDTO= new ItemDTO();
-            ItemDAOImpl itemDAO = new ItemDAOImpl();
-            itemDAO.findItem(String.valueOf(itemDTO));
-
-
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find the Item " + code, e);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
-        return null;
+
+        // Other methods for saving, updating, deleting items, etc. can be added here
     }
 
 
-}
+
+

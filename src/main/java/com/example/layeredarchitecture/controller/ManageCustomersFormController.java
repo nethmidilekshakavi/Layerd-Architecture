@@ -1,6 +1,7 @@
 package com.example.layeredarchitecture.controller;
 
 import com.example.layeredarchitecture.Dao.CustomerDAOImpl;
+import com.example.layeredarchitecture.Dao.CustomerDao;
 import com.example.layeredarchitecture.db.DBConnection;
 import com.example.layeredarchitecture.model.CustomerDTO;
 import com.example.layeredarchitecture.view.tdm.CustomerTM;
@@ -36,6 +37,8 @@ import java.util.List;
     public TableView<CustomerTM> tblCustomers;
     public JFXButton btnAddNewCustomer;
 
+        CustomerDao customerDao = new CustomerDAOImpl();
+
     public void initialize() {
         tblCustomers.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("id"));
         tblCustomers.getColumns().get(1).setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -62,7 +65,6 @@ import java.util.List;
         txtCustomerAddress.setOnAction(event -> btnSave.fire());
         loadAllCustomers();
     }
-
     private void loadAllCustomers() {
         tblCustomers.getItems().clear();
         //Get all customers
@@ -70,8 +72,7 @@ import java.util.List;
            /* Connection connection = DBConnection.getDbConnection().getConnection();
             Statement stm = connection.createStatement();
             ResultSet rst = stm.executeQuery("SELECT * FROM Customer");*/
-            CustomerDAOImpl CustomerDAO = new CustomerDAOImpl();
-            ArrayList<CustomerDTO> customerDTOS = new ArrayList<>(CustomerDAO.getAllCustomers());
+            ArrayList<CustomerDTO> customerDTOS = customerDao.getAllCustomers();
             for(CustomerDTO customerDTO : customerDTOS){
                 tblCustomers.getItems().add(new CustomerTM(customerDTO.getId(),customerDTO.getName(),customerDTO.getAddress()));
             }
@@ -154,10 +155,10 @@ import java.util.List;
                 pstm.setString(2, name);
                 pstm.setString(3, address);
                 pstm.executeUpdate();*/
-                CustomerDTO customerDTO = new CustomerDTO(id,name,address);
-                CustomerDAOImpl customerDAO = new CustomerDAOImpl();
-                customerDAO.saveCustomer(customerDTO);
-                tblCustomers.getItems().add(new CustomerTM(customerDTO.getId(),customerDTO.getName(),customerDTO.getAddress()));
+
+
+                customerDao.saveCustomer(new CustomerDTO(id,name,address));
+                tblCustomers.getItems().add(new CustomerTM(id,name,address));
 
 
             } catch (SQLException e) {
@@ -180,9 +181,7 @@ import java.util.List;
                 pstm.setString(3, id);
                 pstm.executeUpdate();*/
 
-                CustomerDTO customerDTO = new CustomerDTO(id,name,address);
-                CustomerDAOImpl customerDAO = new CustomerDAOImpl();
-                customerDAO.updateCustomer(customerDTO);
+               customerDao.updateCustomer(new CustomerDTO(id,name,address));
 
 
             } catch (SQLException e) {
@@ -205,10 +204,7 @@ import java.util.List;
         PreparedStatement pstm = connection.prepareStatement("SELECT id FROM Customer WHERE id=?");
         pstm.setString(1, id);*/
 
-        CustomerDAOImpl customerDAO = new CustomerDAOImpl();
-       boolean b = customerDAO.exitCustomer(id);
-
-       return b;
+       return  customerDao.isExixt(id);
     }
 
 
@@ -226,8 +222,7 @@ import java.util.List;
 
 
 
-            CustomerDAOImpl customerDAO = new CustomerDAOImpl();
-            customerDAO.deleteCustomer(id);
+           customerDao.deleteCustomer(id);
 
             tblCustomers.getItems().remove(tblCustomers.getSelectionModel().getSelectedItem());
             tblCustomers.getSelectionModel().clearSelection();
@@ -242,15 +237,17 @@ import java.util.List;
 
     private String generateNewId() {
         try {
-          Connection connection = DBConnection.getDbConnection().getConnection();
-            ResultSet rst = connection.createStatement().executeQuery("SELECT id FROM Customer ORDER BY id DESC LIMIT 1;");
-           if (rst.next()) {
-                String id = rst.getString("id");
-                int newCustomerId = Integer.parseInt(id.replace("C00-", "")) + 1;
-                return String.format("C00-%03d", newCustomerId);
-            } else {
-                return "C00-001";
+
+            String id = customerDao.lastId();
+
+            if (id == null){
+
+                return  "C00-001";
+
             }
+            int newCustomerId = Integer.parseInt(id.replace("C00-", "")) + 1;
+            return String.format("C00-%03d", newCustomerId);
+
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, "Failed to generate a new id " + e.getMessage()).show();
         } catch (ClassNotFoundException e) {
